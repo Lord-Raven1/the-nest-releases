@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="The Nest keeps automatic local backups of the files you're working on, every five minutes, and never lets a damaged save push out a good version.">
+<link rel="icon" type="image/png" href="favicon.png">
+<title>The Nest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one dark feather-toned column; the hero logo carries the sheen, everything else stays quiet.
+   Committed single dark look (a raven's wing), so no light variant. */
+:root {
+  color-scheme: dark;
+  --night: #0b1420;      /* page ground: blue-black of a wing */
+  --deep: #10202e;       /* raised surfaces */
+  --barb: #1a3142;       /* lines, borders */
+  --teal: #3fa39a;       /* primary accent: feather sheen */
+  --moss: #6fae7e;       /* good / safe */
+  --cobalt: #5b8fd6;     /* secondary sheen */
+  --quill: #d9e6ec;      /* text */
+  --down: #8ea4b1;       /* muted text */
+  --ember: #e0a25a;      /* warning: damaged file */
+  --font-display: "Young Serif", "Georgia", serif;
+  --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Consolas", monospace;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--night);
+  color: var(--quill);
+  font: 400 1.0625rem/1.65 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+.wrap {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; text-wrap: balance; margin: 0; line-height: 1.15; }
+h2 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); }
+h3 { font-size: 1.2rem; }
+p { margin: 0; }
+.eyebrow {
+  font: 500 0.75rem/1 var(--font-mono);
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--teal);
+}
+.muted { color: var(--down); }
+a { color: var(--teal); }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; border-radius: 4px; }
+
+/* ---------- hero ---------- */
+.hero {
+  position: relative; overflow: hidden;
+  background:
+    radial-gradient(60rem 30rem at 15% -10%, rgba(63,163,154,.16), transparent 60%),
+    radial-gradient(50rem 28rem at 95% 10%, rgba(91,143,214,.14), transparent 60%),
+    radial-gradient(40rem 20rem at 50% 110%, rgba(111,174,126,.10), transparent 60%);
+}
+.hero .wrap {
+  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: center; gap: 2.5rem; padding-block: 4.5rem 4rem;
+}
+.hero-copy { display: grid; gap: 1.4rem; min-width: 0; }
+.wordmark {
+  font-size: clamp(3.2rem, 8vw, 5.6rem); letter-spacing: -0.01em;
+  background: linear-gradient(100deg, #d9e6ec 0%, #9fd3c7 30%, #6f9fe0 55%, #7fc28f 75%, #d9e6ec 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: sheen 9s ease-in-out infinite alternate;
+}
+@keyframes sheen { from { background-position: 0% 0; } to { background-position: 100% 0; } }
+.tagline {
+  font-family: var(--font-display); font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+  color: var(--quill); font-style: italic;
+}
+.lede { max-width: 34rem; color: var(--down); font-size: 1.125rem; }
+.facts { display: flex; flex-wrap: wrap; gap: .5rem; }
+.chip {
+  font: 500 .8rem/1 var(--font-mono); color: var(--quill);
+  padding: .55rem .75rem; border: 1px solid var(--barb); border-radius: 999px;
+  background: rgba(16,32,46,.7);
+}
+.cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
+.download {
+  display: inline-flex; align-items: center; gap: .55rem;
+  font: 600 1rem/1 var(--font-body); color: var(--night); text-decoration: none;
+  background: var(--teal); padding: .85rem 1.2rem; border-radius: 10px;
+}
+.download:hover { filter: brightness(1.08); }
+.download svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.download-note { font: .82rem var(--font-mono); color: var(--down); }
+.logo-stage { display: grid; place-items: center; min-width: 0; }
+#logo { width: 100%; max-width: 13rem; height: auto; --lw: 1.7; }
+.mini-logo { --lw: 6; }
+.closing .mini-logo { --lw: 3; }
+.logo-art { fill: none; stroke-width: var(--lw); stroke-linecap: round; stroke-linejoin: round; }
+.logo-art .hide { fill: var(--night); }
+.titlebar .logo-art .hide { fill: #0d1a26; }
+@media (prefers-reduced-motion: no-preference) {
+  #logo .ln { stroke-dasharray: 1; animation: draw 1.4s cubic-bezier(.5,0,.2,1) both; }
+  #logo .keys .ln { animation-delay: .7s; }
+  #logo .weave .ln { animation-delay: .35s; }
+}
+@media (prefers-reduced-motion: reduce) { .wordmark { animation: none; } }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+/* ---------- sections ---------- */
+section { padding-block: 4.5rem; }
+section + section { border-top: 1px solid var(--barb); }
+.section-head { display: grid; gap: .75rem; max-width: 40rem; margin-bottom: 2.5rem; }
+
+/* app window mock */
+.window {
+  border: 1px solid var(--barb); border-radius: 12px; overflow: hidden;
+  background: var(--deep); box-shadow: 0 40px 80px -30px rgba(0,0,0,.6);
+}
+.titlebar {
+  display: flex; align-items: center; gap: .6rem; padding: .7rem 1rem;
+  background: #0d1a26; border-bottom: 1px solid var(--barb); font-size: .9rem;
+}
+.titlebar svg { width: 18px; height: 18px; }
+.statusline { display: flex; align-items: center; gap: .6rem; padding: .9rem 1.1rem; font-size: .95rem; flex-wrap: wrap; }
+.dot { width: .65rem; height: .65rem; border-radius: 50%; background: var(--ember); box-shadow: 0 0 0 4px rgba(224,162,90,.15); flex: none; }
+.statusline .next { margin-left: auto; font: .8rem var(--font-mono); color: var(--down); }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 34rem; font-size: .92rem; }
+th { text-align: left; font: 500 .72rem var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--down); padding: .6rem 1.1rem; border-block: 1px solid var(--barb); }
+td { padding: .55rem 1.1rem; border-bottom: 1px solid rgba(26,49,66,.6); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.time { font-family: var(--font-mono); font-size: .85rem; padding-left: 2.2rem; }
+tr.file td { font-weight: 600; padding-top: .9rem; }
+tr.bad td { color: var(--ember); }
+.ok { color: var(--moss); }
+.mock-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; padding: .9rem 1.1rem; }
+.mock-btn { font: 500 .85rem var(--font-body); padding: .45rem .8rem; border-radius: 6px; border: 1px solid var(--barb); color: var(--quill); background: #132636; }
+.mock-btn.primary { border-color: var(--teal); background: rgba(63,163,154,.15); }
+.mock-caption { margin-top: 1rem; font-size: .9rem; }
+
+/* steps */
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; list-style: none; margin: 0; padding: 0; counter-reset: s; }
+.steps li { display: grid; gap: .6rem; align-content: start; counter-increment: s; }
+.steps li::before {
+  content: counter(s); font: 400 2.4rem/1 var(--font-display); color: var(--teal);
+}
+
+/* rotation demo */
+.demo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 2.5rem; align-items: start; }
+.demo-copy { display: grid; gap: 1rem; }
+.demo-panel { border: 1px solid var(--barb); border-radius: 12px; padding: 1.25rem; background: var(--deep); display: grid; gap: 1rem; min-width: 0; }
+.shelf-label { font: 500 .72rem var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--down); display: flex; justify-content: space-between; gap: 1rem; }
+.shelf { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5rem; }
+.shelf.suspects { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.slot {
+  border: 1px dashed var(--barb); border-radius: 8px; min-height: 4.2rem;
+  display: grid; place-content: center; text-align: center; gap: .15rem; padding: .4rem;
+  font: .78rem/1.3 var(--font-mono); color: var(--down);
+}
+.slot.good { border: 1px solid rgba(111,174,126,.55); background: rgba(111,174,126,.10); color: var(--quill); }
+.slot.bad { border: 1px solid rgba(224,162,90,.55); background: rgba(224,162,90,.10); color: var(--ember); }
+.slot.fresh { animation: pop .45s ease-out; }
+.slot .t { font-size: .88rem; font-weight: 500; }
+@keyframes pop { from { transform: scale(.85); opacity: .4; } }
+.demo-buttons { display: flex; flex-wrap: wrap; gap: .6rem; }
+button {
+  font: 600 .95rem var(--font-body); color: var(--night); background: var(--teal);
+  border: 0; border-radius: 8px; padding: .7rem 1rem; cursor: pointer;
+}
+button.warn { background: var(--ember); }
+button.ghost { background: transparent; color: var(--down); border: 1px solid var(--barb); }
+button:hover { filter: brightness(1.08); }
+.log { font-size: .95rem; min-height: 3.2em; color: var(--quill); }
+
+/* promises */
+.promises { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--barb); border: 1px solid var(--barb); border-radius: 12px; overflow: hidden; }
+.promise { background: var(--night); padding: 1.5rem 1.25rem; display: grid; gap: .5rem; align-content: start; }
+.promise svg { width: 26px; height: 26px; stroke: var(--teal); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.where { margin-top: 1.5rem; font: .88rem var(--font-mono); color: var(--down); overflow-wrap: anywhere; }
+
+/* closing */
+.closing { text-align: left; }
+.closing .wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2rem; align-items: center; }
+.closing svg { width: 4.5rem; height: auto; }
+.spec { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin-top: 1rem; font: .85rem var(--font-mono); color: var(--down); }
+footer { padding-block: 2rem 3rem; border-top: 1px solid var(--barb); font-size: .85rem; color: var(--down); }
+
+@media (max-width: 860px) {
+  .hero .wrap, .demo { grid-template-columns: minmax(0, 1fr); }
+  .logo-stage { order: -1; }
+  #logo { max-width: 10rem; }
+  .steps { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  .promises { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .promises { grid-template-columns: minmax(0, 1fr); }
+  .closing .wrap { grid-template-columns: minmax(0, 1fr); }
+  .shelf, .shelf.suspects { gap: .3rem; }
+  .slot { font-size: .68rem; min-height: 3.6rem; }
+  .slot .t { font-size: .74rem; }
+}
+</style>
+<style>
+/* base reset (previously supplied by the artifact viewer) */
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-copy">
+      <span class="eyebrow">Local version backups for Windows</span>
+      <h1 class="wordmark">The Nest</h1>
+      <p class="tagline">When certainty needs a guarantee.</p>
+      <p class="lede">The Nest quietly keeps copies of the documents you're working on, every five minutes, in a safe spot on your own computer. If a file gets lost, overwritten or corrupted, your last good version is one click away.</p>
+      <div class="facts">
+        <span class="chip">Every 5 min</span>
+        <span class="chip">Last 5 good versions</span>
+        <span class="chip">100% offline</span>
+        <span class="chip">No install</span>
+      </div>
+      <div class="cta-row">
+        <a class="download" href="https://github.com/Lord-Raven1/the-nest-releases/releases/latest">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+          Download for Windows
+        </a>
+        <span class="download-note">Free · one .exe · about 13 MB</span>
+      </div>
+    </div>
+    <div class="logo-stage">
+      <svg id="logo" viewBox="10 14 110 180" role="img" aria-label="The Nest logo: a feather whose quill ends in a key"></svg>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">What it looks like</span>
+        <h2>Every save, kept. Every damaged file, caught.</h2>
+        <p class="muted">Each copy gets a health check before it goes in the nest. A broken save is flagged in amber and kept to one side, so it can never push out a good version.</p>
+      </div>
+
+      <div class="window" aria-label="Example of The Nest app window">
+        <div class="titlebar"><svg viewBox="10 14 110 180" class="mini-logo" aria-hidden="true"></svg>The Nest</div>
+        <div class="statusline">
+          <span class="dot" aria-hidden="true"></span>
+          <span>14:35 · 1 file looked damaged. Your older good copies are safe.</span>
+          <span class="next">Next check in 4:12</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>File / saved at</th><th class="num">Size</th><th>Health check</th></tr></thead>
+            <tbody>
+              <tr class="file"><td>Thesis – Chapter 3.docx</td><td class="num"></td><td class="muted">4 saved</td></tr>
+              <tr class="bad"><td class="time">14:35:02 (just now)</td><td class="num">0 B</td><td>⚠ File is empty (0 bytes)</td></tr>
+              <tr><td class="time">14:30:01 (5 min ago)</td><td class="num">812.4 KB</td><td class="ok">✔ Looks fine</td></tr>
+              <tr><td class="time">14:20:00 (15 min ago)</td><td class="num">809.9 KB</td><td class="ok">✔ Looks fine</td></tr>
+              <tr><td class="time">13:55:03 (40 min ago)</td><td class="num">796.1 KB</td><td class="ok">✔ Looks fine</td></tr>
+              <tr class="file"><td>Budget 2027.xlsx</td><td class="num"></td><td class="muted">2 saved</td></tr>
+              <tr><td class="time">14:10:00 (25 min ago)</td><td class="num">58.0 KB</td><td class="ok">✔ Looks fine</td></tr>
+              <tr><td class="time">11:45:00 (today)</td><td class="num">57.2 KB</td><td class="ok">✔ Looks fine</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mock-actions">
+          <span class="mock-btn">Open copy</span>
+          <span class="mock-btn">Save a copy as…</span>
+          <span class="mock-btn primary">Restore to original…</span>
+        </div>
+      </div>
+      <p class="mock-caption muted">Example data. Restoring never overwrites anything: the current file is set aside as “(before restore)” first.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">How it works</span>
+        <h2>Three steps, and only the first one is yours.</h2>
+      </div>
+      <ol class="steps">
+        <li><h3>Add what you're working on</h3><p class="muted">Pick a single document or a whole folder. Word, Excel, PowerPoint, PDFs, images, text, anything.</p></li>
+        <li><h3>The Nest keeps watch</h3><p class="muted">Every five minutes it checks for changes. If a file changed, it saves a fresh copy. If nothing changed, it saves nothing.</p></li>
+        <li><h3>Take any version back</h3><p class="muted">Open an old copy, save it somewhere new, or put it back where it was. Lock files and temp files are ignored.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap demo">
+      <div class="demo-copy">
+        <span class="eyebrow">The guarantee</span>
+        <h2>A bad save can't push out a good one.</h2>
+        <p class="muted">Most backup tools keep the last few copies, whatever state they're in. Save a broken file five times and every good copy is gone.</p>
+        <p class="muted">The Nest keeps two shelves. Good versions rotate on one; damaged ones are held on the other for reference. Try it.</p>
+      </div>
+      <div class="demo-panel">
+        <div class="shelf-label"><span>Good versions</span><span id="goodCount">3 of 5</span></div>
+        <div class="shelf" id="goodShelf"></div>
+        <div class="shelf-label"><span>Flagged as damaged</span><span>kept 2 max</span></div>
+        <div class="shelf suspects" id="badShelf"></div>
+        <div class="demo-buttons">
+          <button id="saveGood" type="button">Save a good version</button>
+          <button id="saveBad" type="button" class="warn">Save a corrupted file</button>
+          <button id="reset" type="button" class="ghost">Reset</button>
+        </div>
+        <p class="log" id="log" aria-live="polite">Three good versions are already saved. Try saving a corrupted file a few times.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Privacy</span>
+        <h2>Your documents never leave the nest.</h2>
+        <p class="muted">The Nest has no internet code at all. There is nothing to sign in to and nothing to sync. Copies sit in your own Windows profile, readable only by your account, or on a drive you choose.</p>
+      </div>
+      <div class="promises">
+        <div class="promise">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0"/><path d="M3 3l18 18"/></svg>
+          <h3>No internet</h3><p class="muted">It never connects to anything. It works the same with Wi-Fi off.</p>
+        </div>
+        <div class="promise">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/><path d="M3 3l18 18"/></svg>
+          <h3>No account</h3><p class="muted">No email, no sign-up, no licence server. Open it and it works.</p>
+        </div>
+        <div class="promise">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9H7z"/><path d="M3 3l18 18"/></svg>
+          <h3>No cloud</h3><p class="muted">Nothing is uploaded. It works where OneDrive and AutoRecover are switched off.</p>
+        </div>
+        <div class="promise">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <h3>Yours only</h3><p class="muted">Backups live under your Windows account, not in a shared folder.</p>
+        </div>
+      </div>
+      <p class="where">%LOCALAPPDATA%\The Nest\Backups\Thesis – Chapter 3.docx\2026-11-18_14-30-01__Thesis – Chapter 3.docx</p>
+    </div>
+  </section>
+
+  <section class="closing">
+    <div class="wrap">
+      <svg viewBox="10 14 110 180" class="mini-logo" aria-hidden="true"></svg>
+      <div>
+        <h2>Keep working. The Nest has the rest.</h2>
+        <div class="spec">
+          <span>Windows 10 &amp; 11</span>
+          <span>One .exe, about 13 MB</span>
+          <span>Runs from the taskbar</span>
+          <span>Optional start with Windows</span>
+        </div>
+        <p style="margin-top:1.25rem"><a class="download" href="https://github.com/Lord-Raven1/the-nest-releases/releases/latest">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+          Download The Nest
+        </a></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">The Nest · When certainty needs a guarantee.</div>
+</footer>
+
+<script>
+(function () {
+  // ---------- logo: a raven feather whose quill ends in a key blade ----------
+  // Drawn upright, then tilted like a quill pen. The vane is long and narrow,
+  // wider on one side, with fine barbs sweeping toward the tip and a split
+  // in each edge. Below it: a little down, the bare quill, and a key bit.
+  const TIP = 8, BASE = 113;
+  const shaftX = y => 60 + 3.5 * Math.sin(Math.PI * (y - TIP) / 152);
+  function halfWidth(y, side) {
+    const t = (y - TIP) / (BASE - TIP);
+    if (t <= 0 || t >= 1) return 0;
+    const w = Math.pow(Math.sin(Math.PI * Math.pow(t, 0.62)), 0.55);
+    return (side < 0 ? 17 : 10.5) * w;
+  }
+  const edge = (y, side) => [shaftX(y) + side * halfWidth(y, side), y];
+  const f = n => n.toFixed(1);
+  function edgePath(side, splitAt) {
+    let d = `M${f(shaftX(TIP))} ${TIP}`;
+    for (let y = TIP + 3; y <= BASE; y += 3) {
+      if (Math.abs(y - splitAt) < 1.5) {
+        // a split: the edge dips in toward the shaft, then carries on
+        const [ex] = edge(y + 5, side);
+        d += ` L${f(ex - side * halfWidth(y + 5, side) * 0.55)} ${f(y + 3)}`;
+        y += 6;
+      }
+      const [x, yy] = edge(y, side);
+      d += ` L${f(x)} ${f(yy)}`;
+    }
+    return d + ` L${f(shaftX(BASE))} ${BASE}`;
+  }
+  function barbs(side) {
+    let d = "";
+    for (let y = 20; y < BASE - 5; y += 6) {
+      const y2 = y - 9.5, [ex] = edge(y2, side);
+      const x2 = shaftX(y2) + (ex - shaftX(y2)) * 0.82;
+      d += `M${f(shaftX(y))} ${y} L${f(x2)} ${f(y2)} `;
+    }
+    return d;
+  }
+  function featherMarkup(detailed) {
+    return `<g class="logo-art" transform="rotate(28 60 84)">
+      <g stroke="#3fa39a">
+        <path class="ln" pathLength="1" d="${edgePath(-1, 77)}"/>
+        <path class="ln" pathLength="1" d="${edgePath(1, 50)}"/>
+      </g>
+      ${detailed ? `<g class="weave" stroke="#5b8fd6" style="stroke-width:calc(var(--lw) * .5)">
+        <path class="ln" pathLength="1" d="${barbs(-1)}"/>
+        <path class="ln" pathLength="1" d="${barbs(1)}"/>
+      </g>
+      <g class="weave" stroke="#6fae7e" style="stroke-width:calc(var(--lw) * .6)">
+        <path class="ln" pathLength="1" d="M62.5 117 C56 114 51 117 49 122 M62.5 117 C68 114 73 116 75 120 M62.5 123 C57 122 54 125 53 129"/>
+      </g>` : ""}
+      <path class="ln" pathLength="1" stroke="#b9e3d9" d="M${f(shaftX(TIP))} ${TIP} C63 52 63.5 95 62.5 159"/>
+      <g class="keys" stroke="#b9e3d9">
+        <path class="ln" pathLength="1" d="M62.5 137 H76 V144 H70.5 V151 H76 V159 H62.5"/>
+      </g>
+    </g>`;
+  }
+  function place(svg, detailed) {
+    svg.innerHTML = featherMarkup(detailed);
+    // fit the frame snugly around the drawing, with room for the stroke
+    try {
+      const b = svg.getBBox(), p = 4;
+      svg.setAttribute("viewBox", `${f(b.x - p)} ${f(b.y - p)} ${f(b.width + 2 * p)} ${f(b.height + 2 * p)}`);
+    } catch (e) { /* keep the default frame */ }
+  }
+  place(document.getElementById("logo"), true);
+  document.querySelectorAll(".mini-logo").forEach(s => place(s, s.closest(".closing") !== null));
+
+  // ---------- rotation demo ----------
+  const KEEP_GOOD = 5, KEEP_BAD = 2;
+  const goodShelf = document.getElementById("goodShelf");
+  const badShelf = document.getElementById("badShelf");
+  const log = document.getElementById("log");
+  const goodCount = document.getElementById("goodCount");
+  let clock, good, bad, fresh;
+
+  function stamp() {
+    clock += 5;
+    const h = Math.floor(clock / 60), m = clock % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  }
+  function reset() {
+    clock = 9 * 60 - 5; good = []; bad = []; fresh = null;
+    for (let i = 0; i < 3; i++) good.push(stamp());
+    render();
+    log.textContent = "Three good versions are already saved. Try saving a corrupted file a few times.";
+  }
+  function slot(cls, t, label, isFresh) {
+    const d = document.createElement("div");
+    d.className = "slot " + cls + (isFresh ? " fresh" : "");
+    if (t) {
+      const tt = document.createElement("span"); tt.className = "t"; tt.textContent = t;
+      const ll = document.createElement("span"); ll.textContent = label;
+      d.append(tt, ll);
+    } else d.textContent = "empty";
+    return d;
+  }
+  function render() {
+    goodShelf.replaceChildren(...Array.from({ length: KEEP_GOOD }, (_, i) =>
+      good[i] ? slot("good", good[i], "✔ fine", fresh === good[i]) : slot("", null)));
+    badShelf.replaceChildren(...Array.from({ length: KEEP_GOOD }, (_, i) =>
+      i < KEEP_BAD ? (bad[i] ? slot("bad", bad[i], "⚠ damaged", fresh === bad[i]) : slot("", null))
+                   : Object.assign(document.createElement("div"), { ariaHidden: "true" })));
+    goodCount.textContent = `${good.length} of ${KEEP_GOOD}`;
+  }
+  document.getElementById("saveGood").addEventListener("click", () => {
+    const t = stamp(); good.push(t); fresh = t;
+    let msg = `Saved a good version at ${t}.`;
+    if (good.length > KEEP_GOOD) { const gone = good.shift(); msg += ` The oldest good copy (${gone}) made room for it.`; }
+    log.textContent = msg; render();
+  });
+  document.getElementById("saveBad").addEventListener("click", () => {
+    const t = stamp(); bad.push(t); fresh = t;
+    if (bad.length > KEEP_BAD) bad.shift();
+    log.textContent = `${t}: the file failed its health check. It's flagged, and all ${good.length} good versions are untouched.`;
+    render();
+  });
+  document.getElementById("reset").addEventListener("click", reset);
+  reset();
+})();
+</script>
+
+</body>
+</html>
